@@ -1,26 +1,91 @@
-# CampusAI – Digital Twin for Smart Campus Monitoring
+# CampusAI — Synthetic Smart-Campus Digital Twin
 
-A full‑stack capstone project combining **IoT simulation**, **3D geovisualization**, **on‑device machine learning**, and **predictive analytics** – built entirely with Next.js 
+CampusAI is a full-stack Next.js demonstration of a campus monitoring
+interface built around **synthetic IoT data**. It combines a server-sent-event
+(SSE) stream, a 3D sensor map, simple anomaly detection and a one-step
+temperature trend baseline.
 
-## System Architecture
-[Browser] ←── SSE Stream ──→ [Next.js API (/api/sensors)]
-│ │
-├─ React Three Fiber (3D) Sensor Simulator (50 nodes)
-├─ Recharts (time‑series) Realistic diurnal patterns
-├─ On‑Device Anomaly Detector
-└─ Linear Regression Forecast
+> **Data transparency:** this repository currently simulates all sensor
+> readings. It is not connected to real campus hardware, a production IoT
+> gateway or a university database. Buildings and coordinates are illustrative.
 
+## Features
 
-## Technical Highlights
-- **SSE over WebSockets** for efficient unidirectional streaming.
-- **Rolling Z‑score anomaly detection** runs entirely in the browser (threshold 2.5σ, window size 20).
-- **Linear regression model** forecasts next temperature value from recent history.
-- **No external database** – data is generated ephemerally, mimicking an edge IoT gateway.
-- **3D scene** built with Three.js and React Three Fiber, interactive orbit controls.
+- 50 stable synthetic sensor identities across five illustrative building labels.
+- SSE endpoint at `/api/sensors`, emitting a fresh reading batch every two seconds.
+- Browser-side rolling z-score detector with per-sensor history.
+- A simple linear-regression next-value estimate for recent average temperature.
+- 3D campus visualization and time-series dashboard.
+- Deterministic sensor-generation hooks for repeatable automated tests.
 
-## How to Deploy (One‑Click)
-1. Fork or clone this repository.
-2. Go to [Vercel](https://vercel.com) and import this repository.
-3. No environment variables, no configuration. Just click **Deploy**.
+## Run locally
 
-*Built with Next.js 14, Three.js, Recharts, Tailwind CSS.*
+Requires Node.js 18.18 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The dashboard is available
+at `/dashboard` if the root route does not redirect in your environment.
+
+## Quality checks
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+The test suite exercises deterministic sensor generation, stable sensor
+identities, historical-only anomaly scoring, injected-label preservation,
+per-sensor detector state and regression forecast edge cases. GitHub Actions
+runs these checks and a production build on pushes and pull requests.
+
+## Project structure
+
+```text
+src/
+  app/
+    api/sensors/route.ts     # SSE sensor stream
+    dashboard/page.tsx       # dashboard UI
+  components/Campus3D.tsx     # 3D view
+  lib/sensor-simulator.ts    # data generator, detector, forecast baseline
+scripts/
+  sensor-simulator.test.cjs  # Node built-in tests
+docs/
+  data-and-validation.md     # data provenance and evaluation notes
+.github/workflows/ci.yml
+```
+
+## Method notes
+
+The anomaly detector compares a new observation with prior observations from
+that sensor, then adds the candidate to its bounded history. This avoids
+diluting a spike with the point being tested. A minimum warm-up period and
+small standard-deviation floor are configurable.
+
+The forecast is ordinary least-squares linear extrapolation over a short
+temperature window. It is a baseline for teaching, not a validated prediction
+system. See [docs/data-and-validation.md](docs/data-and-validation.md) for
+assumptions, limitations and a research-grade evaluation plan.
+
+## Research extensions
+
+Useful next experiments include labelled anomaly benchmarks, comparisons with
+MAD/EWMA/change-point detectors, time-series holdout evaluation, sensor-noise
+sensitivity, missing-data handling and drift detection. Report precision,
+recall, false-positive rate and detection delay before making model-performance
+claims.
+
+## Deployment
+
+This Next.js app is structured for deployment on a Node-compatible host or
+Vercel. No hosted deployment has been configured from this repository
+connection; the CI workflow validates the build only.
+
+## License
+
+No separate license file is currently provided. Ask before reusing or
+redistributing this repository's code.
